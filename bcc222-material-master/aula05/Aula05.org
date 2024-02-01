@@ -1,0 +1,670 @@
+#+OPTIONS: date:nil reveal_mathjax:t toc:nil num:nil
+#+OPTIONS: tex t
+#+OPTIONS: timestamp:nil
+#+PROPERTY: tangle Aula05.hs
+#+PROPERTY: :header-args:haskell: :prologue ":{\n" :epilogue ":}\n"
+#+REVEAL_THEME: white
+#+REVEAL_HLEVEL: 1
+#+REVEAL_ROOT: file:///users/rodrigo/reveal.js
+
+#+Title: Funções de ordem superior
+#+Author:  Programação Funcional
+
+* Objetivos
+
+** Objetivos
+
+- Definir e usar funções de ordem superior.
+- Definir e usar funções anônimas.
+- Entender composição de funções.
+- Entender aplicação parcial.
+
+** Setup inicial
+
+#+begin_src haskell :tangle yes :exports code :results output
+module Aula05 where
+
+import Prelude hiding ( map
+                      , filter
+                      , foldr
+                      , foldl
+                      , flip
+                      , (.)
+                      )
+import Data.Char
+#+end_src
+
+* Função ~map~
+
+** Tarefa
+
+- Desenvolver uma função que dobra todo número presente em uma lista de inteiros.
+
+- Como implementar essa função em Haskell?
+
+** Função ~doubleList~
+
+- Definindo o tipo.
+
+#+begin_src haskell 
+doubleList :: [Int] -> [Int]
+#+end_src
+
+** Função ~doubleList~
+
+- Enumerando os casos.
+
+#+begin_src haskell 
+doubleList :: [Int] -> [Int]
+doubleList []       = _
+doubleList (x : xs) = _
+#+end_src
+
+** Função ~doubleList~
+
+- Definindo o caso base.
+
+#+begin_src haskell
+doubleList :: [Int] -> [Int]
+doubleList []       = []
+doubleList (x : xs) = _
+#+end_src
+
+** Função ~doubleList~
+
+- Definindo o caso recursivo.
+
+#+begin_src haskell 
+doubleList :: [Int] -> [Int]
+doubleList [] = []
+doubleList (x : xs) = 2 * x : doubleList xs
+#+end_src
+
+
+** Tarefa
+
+- Definir uma função que realiza a negação de todos os elementos de uma lista de booleanos.
+
+- Como implementar essa função em Haskell?
+
+** Função ~notList~
+
+- Definindo o tipo
+
+#+begin_src haskell
+notList :: [Bool] -> [Bool]
+#+end_src
+
+** Função notList
+
+- Enumerando os casos
+
+#+begin_src haskell
+notList :: [Bool] -> [Bool]
+notList []       = _
+notList (x : xs) = _
+#+end_src
+
+** Função notList
+
+- Definindo o caso base
+
+#+begin_src haskell
+notList :: [Bool] -> [Bool]
+notList []       = []
+notList (x : xs) = _
+#+end_src
+
+** Função notList
+
+- Definindo o caso recursivo
+
+#+begin_src haskell
+notList :: [Bool] -> [Bool]
+notList []       = []
+notList (x : xs) = not x : notList xs
+#+end_src
+
+
+** Padrão
+
+- As definições de =doubleList= e =notList= são muito similares.
+
+#+begin_src haskell
+doubleList :: [Int] -> [Int]
+doubleList [] = []
+doubleList (x : xs) = 2 * x : doubleList xs
+
+notList :: [Bool] -> [Bool]
+notList [] = []
+notList (x : xs) = not x : notList xs
+#+end_src
+
+** Refatorar
+
+- Ao nos depararmos com código similar, devemos utilizar refatoração.
+
+- Extrair "o que há de comum" e reutilizar.
+
+- Pergunta: O que há de comum?
+
+** Casos base
+
+- Note que em ambos os casos base, retorna-se uma lista vazia.
+
+#+begin_src haskell 
+doubleList :: [Int] -> [Int]
+doubleList [] = []
+doubleList (x : xs) = 2 * x : doubleList xs
+
+notList :: [Bool] -> [Bool]
+notList [] = []
+notList (x : xs) = not x : notList xs
+#+end_src
+
+** Caso recursivo
+
+- No caso recursivo ambas as funções são chamadas recursivamente sobre a cauda.
+
+- Porém, cada uma aplica uma função diferente sobre a cabeça da lista...
+
+#+begin_src haskell
+doubleList (x : xs) = 2 * x : doubleList xs
+
+notList (x : xs) = not x : notList xs
+#+end_src
+
+** Caso recursivo
+
+- Uma possível generalização:
+
+#+begin_src haskell
+map :: [a] -> [b]
+map []       = []
+map (x : xs) = ? : map xs
+#+end_src
+
+- Pergunta: o que deve preencher a `?` ?
+
+
+** Caso recursivo
+
+- Como as funções =doubleList= e =notList= usam funções diferentes
+- Podemos implementá-las usando a função =map= se ...
+  - Passarmos como parâmetro a função a ser aplicada a cada elemento da lista.
+
+** Função ~map~
+
+- Definição da função =map=:
+    - Essa é uma função de ordem superior
+
+#+begin_src haskell :tangle yes :exports code :results output
+map :: (a -> b) -> [a] -> [b]
+map _ []       = []
+map f (x : xs) = f x : map f xs
+#+end_src
+
+** Refatorando
+
+- Definindo =doubleList= e =notList= usando =map=.
+
+#+begin_src haskell :tangle yes :exports code :results output
+doubleList :: [Int] -> [Int]
+doubleList xs = map double xs
+     where
+       double x = 2 * x
+
+notList :: [Bool] -> [Bool]
+notList xs = map not xs
+#+end_src
+
+** Recapitulando
+
+- A função =map= expressa o padrão de computação de aplicar uma função sobre cada elemento de uma lista.
+
+* Função ~filter~
+
+** Tarefa
+
+- Definir uma uma função que, a partir de uma string, retorna todos os caracteres minúsculos nela contidos.
+
+- Como definir essa função em Haskell?
+
+** Função lowers
+
+- Definindo o tipo
+
+#+begin_src haskell
+lowers :: String -> String
+#+end_src
+
+** Função lowers
+
+- Definindo os casos
+  - Lembre-se ~String~ é igual a  ~[Char]~.
+
+#+begin_src haskell
+lowers :: String -> String
+lowers []       = _
+lowers (x : xs) = _
+#+end_src
+
+
+** Função lowers
+
+- Definindo o caso base
+
+#+begin_src haskell
+lowers :: String -> String
+lowers []       = []
+lowers (x : xs) = _
+#+end_src
+
+** Função lowers
+
+- Definindo o caso recursivo
+
+#+begin_src haskell
+lowers :: String -> String
+lowers [] = []
+lowers (x : xs)
+  | isLower x = x : lowers xs
+  | otherwise = lowers xs
+#+end_src
+
+** Tarefa
+
+- Implementar uma função que retorne todos os números pares presentes em uma lista de inteiros.
+
+** Função evens
+
+- Definindo o tipo
+
+#+begin_src haskell
+evens :: [Int] -> [Int]
+#+end_src
+
+** Função evens
+
+- Enumerando os casos
+
+#+begin_src haskell
+evens :: [Int] -> [Int]
+evens []       = _
+evens (x : xs) = _
+#+end_src
+
+** Função evens
+
+- Definindo o caso base.
+
+#+begin_src haskell
+evens :: [Int] -> [Int]
+evens []       = []
+evens (x : xs) = _
+#+end_src
+
+
+** Função evens
+
+- Definindo o caso recursivo.
+
+#+begin_src haskell 
+evens :: [Int] -> [Int]
+evens [] = []
+evens (x : xs)
+  | even x = x : evens xs
+  | otherwise = evens xs
+#+end_src
+
+** Similaridade
+
+- =lowers= e =evens= são bem similares
+- Pergunta: Qual o padrão de computação envolvido?
+
+#+begin_src haskell
+lowers [] = []
+lowers (x : xs)
+  | isLower x = x : lowers xs
+  | otherwise = lowers xs
+
+evens [] = []
+evens (x : xs)
+  | even x = x : evens xs
+  | otherwise = evens xs
+#+end_src
+
+** Caso base
+
+- Ambas as funções retornam a lista vazia, quando sua entrada também é a lista vazia.
+
+#+begin_src haskell
+lowers [] = []
+lowers (x : xs)
+  | isLower x = x : lowers xs
+  | otherwise = lowers xs
+
+evens [] = []
+evens (x : xs)
+  | even x = x : evens xs
+  | otherwise = evens xs
+#+end_src
+
+** Caso recursivo
+
+- Inclui-se a cabeça da lista no resultado caso ela satisfaça a propriedade em questão: ser par ou ser uma letra minúscula.
+
+#+begin_src haskell
+lowers [] = []
+lowers (x : xs)
+  | isLower x = x : lowers xs
+  | otherwise = lowers xs
+
+evens [] = []
+evens (x : xs)
+  | even x = x : evens xs
+  | otherwise = evens xs
+#+end_src
+
+** Generalizando
+
+- Como no caso de =map=, a função que generaliza =lowers= e =evens= também deve receber uma função (a condição de teste) como parâmetro.
+
+#+begin_src haskell :tangle yes :export code :results output
+filter :: (a -> Bool) -> [a] -> [a]
+filter _ [] = []
+filter p (x : xs)
+  | p x = x : filter p xs
+  | otherwise = filter p xs
+#+end_src
+
+** Refatorando
+
+#+begin_src haskell :tangle yes :export code :results output
+lowers :: String -> String
+lowers xs = filter isLower xs
+
+evens :: [Int] -> [Int]
+evens xs = filter even xs
+#+end_src
+
+* Funções Anônimas
+
+** Funções Anônimas
+
+- Haskell permite definirmos funções sem atribuir a elas um nome.
+
+#+begin_src haskell
+\ arguments -> code
+#+end_src
+
+** Funções Anônimas
+
+- Redefinindo =doubleList=:
+
+#+begin_src haskell
+doubleList :: [Int] -> [Int]
+doubleList xs = map (\ x -> 2 * x) xs
+#+end_src
+
+** Funções Anônimas
+
+- A expressão =\ x -> 2 * x= é uma função anônima.
+     - O símbolo =\= representa a letra grega \(\lambda\).
+- Nota histórica: A fundamentação teórica das linguagens funcionais é chamada de \(\lambda\)-cálculo e foi criada por volta de 1930 por Alonzo Church.
+
+** Funções Anônimas
+
+- Expressões \(\lambda\) possuem tipos funcionais.
+
+#+begin_src haskell
+Prelude*> :t \ x -> x ++ "!"
+\ x -> x ++ "!" :: String -> String
+#+end_src
+
+** Funções Anônimas
+
+- Podem ser utilizadas em qualquer lugar em que
+espera-se uma função.
+
+#+begin_src haskell
+Prelude*> (\ x -> x ++ "!") "Hello"
+"Hello!"
+#+end_src
+
+** Funções Anônimas
+
+- Podem ser utilizadas para definir funções.
+
+#+begin_src haskell
+double = \ x -> 2 * x
+#+end_src
+
+* Funções Curried
+
+** Retornando funções
+
+- A função =flip= muda a ordem dos argumentos de uma função fornecida como argumento.
+
+#+begin_src haskell
+flip :: (a -> b -> c) -> (b -> a -> c)
+flip f = _
+#+end_src
+
+** Retornando funções
+
+- A função =flip= muda a ordem dos argumentos de uma função fornecida como argumento.
+  - Cria uma função a partir de outra
+
+#+begin_src haskell
+flip :: (a -> b -> c) -> (b -> a -> c)
+flip f = \ b a -> f a b
+#+end_src
+
+** Funções Curried
+
+- Em Haskell, funções recebem um argumento por vez.
+
+- Funções, em Haskell, são *currificadas*.
+
+#+begin_src haskell
+map :: (a -> b) -> [a] -> [b]
+map :: (a -> b) -> ([a] -> [b])
+#+end_src
+
+** Funções Curried
+
+- Uma função de dois argumentos é, na verdade, uma função de um argumento que retorna outra função de um argumento.
+
+** Funções Curried
+
+- Exemplo: funções com 3 argumentos.
+
+#+begin_src haskell :tangle yes :exports code :results output
+multThree :: Int -> Int -> Int -> Int
+multThree x y z = x * y * z
+#+end_src
+
+** Funções Curried
+
+- Exemplo: funções com 3 argumentos.
+  - Funções associam à esquerda.
+
+#+begin_src haskell
+multThree :: Int -> (Int -> (Int -> Int))
+multThree x y z = x * y * z
+#+end_src
+
+** Funções Curried
+
+- Várias versões da mesma função
+
+#+begin_src haskell
+multThree x y z = x * y * z
+multThree x y = \ z -> x * y * z
+multThree x = \ y z -> x * y * z
+multThree = \ x y z -> x * y * z
+#+end_src
+
+* Aplicação parcial
+
+** Aplicação parcial
+
+- Como funções recebem um argumento por vez...
+- Podemos fornecer menos argumentos e retornar uma função.
+  - Fornecer menos argumentos e retornar uma função é o que chamamos de *aplicação parcial*.
+
+** Aplicação parcial
+
+- Exemplo
+
+#+begin_src haskell
+> :t map (\ x -> 2 * x)
+map (\ x -> 2 * x) :: Num a => [a] -> [a]
+#+end_src
+
+** Aplicação parcial
+
+- Definição por aplicação parcial
+  - Podemos usar a aplicação parcial para definição de funções.
+- Exemplo
+  - Podemos definir:
+
+#+begin_src haskell
+doubleList' xs = map (\ x -> 2 * x) xs
+#+end_src
+
+  - Como:
+
+#+begin_src haskell :tangle yes :exports code :results output
+doubleList' = map (\ x -> 2 * x)
+#+end_src
+
+** Aplicação parcial
+
+- Outra possibilidade de aplicação parcial é a de operadores.
+    
+#+begin_src haskell
+(x #) = \ y -> x # y
+(# y) = \ x -> x # y
+#+end_src
+
+- Exemplo
+
+#+begin_src haskell :tangle yes :exports code :results output
+greaterThan5 = filter (> 5)
+#+end_src
+
+* Composição
+
+** Composição
+
+- Em matemática, a definição de composição de funções
+
+\begin{array}{l}
+f : A \to B \\
+g : B \to C \\
+\end{array}
+
+- é dada por:
+
+\begin{array}{l}
+g \circ f(x) = g (f x)
+\end{array}
+
+** Composição
+
+- Em Haskell, podemos representar a mesma definição usando a seguinte função de ordem superior:
+
+#+begin_src haskell :tangle yes :exports code :results output
+(.) :: (b -> c) -> (a -> b) -> a -> c
+g . f = \ x -> g (f x)
+#+end_src
+
+** Composição
+
+- Exemplos
+
+#+begin_src haskell
+not :: Bool -> Bool
+even :: Int -> Bool
+
+odd = not . even
+
+filterNot :: (a -> Bool) -> [a] -> [a]
+filterNot p = filter (not . p)
+#+end_src
+
+** Composição
+
+- Exemplo
+  - Desenvolver a maior das médias de uma lista de listas de números
+
+#+begin_src haskell
+maxAverage :: [[Float]] -> Float
+#+end_src
+
+- Como utilizar a composição para implementar essa função?
+
+** Composição
+
+- Implementar funções usando composição envolve formar uma sequência de transformações do tipo das entradas na saída.
+
+** Composição
+
+- Para construir =maxAverage=, vamos usar os seguintes passos:
+  - 1. vamos remover as listas vazias de do argumento ~[[Float]]~.
+
+#+begin_src haskell :tangle yes :exports code :results output
+removeNull :: [[a]] -> [[a]]
+removeNull = filter (not . null)
+#+end_src
+
+** Composição
+
+- 2. Calcular a média de cada uma das listas ~[Float]~ em ~[[Float]]~.
+
+#+begin_src haskell :tangle yes :exports code :results output
+averageList :: [[Float]] -> [Float]
+averageList = map average
+    where
+       average xs = sum xs / fromIntegral (length xs) 
+#+end_src
+
+** Composição
+
+- Usando as funções anteriores, podemos definir =maxAverage= como:
+
+#+begin_src haskell :tangle yes :exports code :results output
+maxAverage :: [[Float]] -> Float
+maxAverage = maximum . averageList . removeNull  
+#+end_src
+
+** Composição
+
+- Função =maxAverage=: escrita em /point-free/ style.
+
+#+begin_src haskell 
+maxAverage :: [[Float]] -> Float
+maxAverage = maximum . map average . filter (not . null)
+  where
+    average xs = sum xs / fromIntegral (length xs)
+#+end_src
+
+* Exercícios
+
+** Exercícios
+
+- Implemente a função =capitalize= que converte todas as letras minúsculas em uma string para maiúsculas. Utilize a função =toUpper= da biblioteca =Data.Char=.
+
+#+begin_src haskell
+capitalize :: String -> String
+#+end_src
+
+** Exercícios
+
+- Implemente a função =withoutPrimes= que remove todos os valores primos de uma lista de inteiros fornecida como argumento.
+
+#+begin_src haskell
+withoutPrimes :: [Int] -> [Int]
+#+end_src 
